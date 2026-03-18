@@ -1,18 +1,8 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { initializeApp } from "firebase/app";
-import {
-getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword,
-signOut, onAuthStateChanged, updateProfile
-} from "firebase/auth";
-import {
-getFirestore, collection, doc, addDoc, setDoc, getDoc,
-onSnapshot, updateDoc, query, orderBy, serverTimestamp, arrayUnion, arrayRemove
-} from "firebase/firestore";
-import {
-Search, Upload, BookOpen, Users, Home, User, Plus, Star, Heart,
-MessageCircle, ChevronRight, Grid, Layers, ArrowLeft, Trash2,
-Edit3, X, Check, Send, Image, Sun, Moon, Camera, LogOut, Mail, Lock, Eye, EyeOff
-} from "lucide-react";
+import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuth
+import { getFirestore, collection, doc, addDoc, setDoc, onSnapshot, updateDoc, query, orderBy
+import { Search, Upload, BookOpen, Users, Home, User, Plus, Heart, MessageCircle, ChevronRigh
 const firebaseConfig = {
 apiKey: "AIzaSyDyYk7LbmhpTXMuOEBhMMGFGFY-YHWEYps",
 authDomain: "brickbuilderz.firebaseapp.com",
@@ -24,7 +14,7 @@ appId: "1:984904538590:web:6a9e4cecb227027031654f"
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
-const SAMPLE_BUILDS = [
+const BUILDS = [
 { id: 1, title: "Medieval Castle", author: "BrickMaster99", pieces: 1240, likes: 342, steps
 { id: 2, title: "Space Rocket", author: "CosmicBuilder", pieces: 560, likes: 189, steps: 12
 { id: 3, title: "Cozy Cottage", author: "TinyBricks", pieces: 380, likes: 274, steps: 18, t
@@ -32,88 +22,71 @@ const SAMPLE_BUILDS = [
 { id: 5, title: "Racing Car", author: "SpeedBricks", pieces: 210, likes: 93, steps: 9, tags
 { id: 6, title: "Lighthouse", author: "OceanMOC", pieces: 670, likes: 158, steps: 21, tags:
 ];
-const DIFFICULTY_COLORS = {
+const DIFF = {
 Beginner: "bg-emerald-100 text-emerald-700",
 Intermediate: "bg-amber-100 text-amber-700",
-Advanced: "bg-red-100 text-red-700",
+Advanced: "bg-red-100 text-red-700"
 };
-const AVATAR_GRADIENTS = [
-"from-blue-500 to-blue-700",
-"from-indigo-500 to-purple-600",
-"from-emerald-500 to-green-700",
-"from-cyan-500 to-blue-600",
-"from-orange-400 to-rose-500",
-"from-pink-500 to-rose-600",
-"from-violet-500 to-purple-700",
-];
-const NAV_ITEMS = [
+const GR = ["from-blue-500 to-blue-700", "from-indigo-500 to-purple-600", "from-emerald-500 t
+const NAV = [
 { id: "home", label: "Discover", icon: Home },
 { id: "community", label: "Community", icon: Users },
 { id: "upload", label: "Upload", icon: Upload },
-{ id: "instructions", label: "Guide", icon: BookOpen },
-{ id: "profile", label: "Profile", icon: User },
+{ id: "guide", label: "Guide", icon: BookOpen },
+{ id: "profile", label: "Profile", icon: User }
 ];
-function readFileAsDataUrl(file) {
-return new Promise((resolve) => {
-const reader = new FileReader();
-reader.onload = () => resolve(reader.result);
-reader.readAsDataURL(file);
-});
+function readFile(file) {
+return new Promise(res => { const r = new FileReader(); r.onload = () => res(r.result); r.r
 }
-function getGradient(uid) {
-if (!uid) return AVATAR_GRADIENTS[0];
-let hash = 0;
-for (let i = 0; i < uid.length; i++) hash = uid.charCodeAt(i) + ((hash << 5) - hash);
-return AVATAR_GRADIENTS[Math.abs(hash) % AVATAR_GRADIENTS.length];
-}
-function BuildPlaceholder({ color, title }) {
-return (
-</div>
-<div className={`w-full h-full bg-gradient-to-br ${color || "from-gray-200 to-gray-300"}
-<span className="text-gray-500 font-bold text-xs text-center px-2">{title}</span>
-);
+function gr(uid) {
+if (!uid) return GR[0];
+let h = 0;
+for (let i = 0; i < uid.length; i++) { h = uid.charCodeAt(i) + ((h << 5) - h); }
+return GR[Math.abs(h) % GR.length];
 }
 function AuthScreen({ onAuth }) {
 const [mode, setMode] = useState("login");
 const [email, setEmail] = useState("");
-const [password, setPassword] = useState("");
-const [username, setUsername] = useState("");
-const [showPass, setShowPass] = useState(false);
-const [error, setError] = useState("");
+const [pass, setPass] = useState("");
+const [name, setName] = useState("");
+const [show, setShow] = useState(false);
+const [err, setErr] = useState("");
 const [loading, setLoading] = useState(false);
-const handleSubmit = async () => {
-setError("");
+const submit = async () => {
+setErr("");
 setLoading(true);
 try {
 if (mode === "signup") {
-if (!username.trim()) { setError("Username is required"); setLoading(false); return;
-const cred = await createUserWithEmailAndPassword(auth, email, password);
-await updateProfile(cred.user, { displayName: username.trim() });
-await setDoc(doc(db, "users", cred.user.uid), {
-uid: cred.user.uid,
-displayName: username.trim(),
+if (!name.trim()) {
+setErr("Username required");
+setLoading(false);
+return;
+}
+const c = await createUserWithEmailAndPassword(auth, email, pass);
+await updateProfile(c.user, { displayName: name.trim() });
+await setDoc(doc(db, "users", c.user.uid), {
+uid: c.user.uid,
+displayName: name.trim(),
 email: email,
 bio: "New to BrickBuilder",
 followers: [],
 following: [],
 createdAt: serverTimestamp(),
-photoURL: null,
+photoURL: null
 });
-onAuth(cred.user);
+onAuth(c.user);
 } else {
-const cred = await signInWithEmailAndPassword(auth, email, password);
-onAuth(cred.user);
+const c = await signInWithEmailAndPassword(auth, email, pass);
+onAuth(c.user);
 }
 } catch (e) {
 const msgs = {
 "auth/email-already-in-use": "Email already in use.",
-"auth/invalid-email": "Invalid email address.",
-"auth/weak-password": "Password must be at least 6 characters.",
-"auth/user-not-found": "No account found with this email.",
-"auth/wrong-password": "Incorrect password.",
-"auth/invalid-credential": "Incorrect email or password.",
+"auth/invalid-email": "Invalid email.",
+"auth/weak-password": "Password needs 6+ characters.",
+"auth/invalid-credential": "Wrong email or password."
 };
-setError(msgs[e.code] || e.message);
+setErr(msgs[e.code] || e.message);
 }
 setLoading(false);
 };
@@ -124,13 +97,13 @@ return (
 <div className="w-14 h-14 bg-gray-900 rounded-2xl flex items-center justify-center
 <Grid size={24} className="text-white" />
 </div>
-<h1 className="text-3xl font-bold text-gray-900 tracking-tight">BrickBuilder</h1>
+<h1 className="text-3xl font-bold text-gray-900">BrickBuilder</h1>
 <p className="text-gray-400 text-sm mt-1">Discover and share LEGO builds</p>
 </div>
 <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
 <div className="flex rounded-xl bg-gray-100 p-1 mb-6">
 {["login", "signup"].map(m => (
-<button key={m} onClick={() => { setMode(m); setError(""); }} className={`flex-
+<button key={m} onClick={() => { setMode(m); setErr(""); }} className={"flex-1
 {m === "login" ? "Sign In" : "Create Account"}
 </button>
 ))}
@@ -139,7 +112,7 @@ return (
 {mode === "signup" && (
 <div className="relative">
 <User size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray
-<input value={username} onChange={e => setUsername(e.target.value)} placehold
+<input value={name} onChange={e => setName(e.target.value)} placeholder="User
 </div>
 )}
 <div className="relative">
@@ -148,20 +121,20 @@ return (
 </div>
 <div className="relative">
 <Lock size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-4
-<input type={showPass ? "text" : "password"} value={password} onChange={e => se
-<button onClick={() => setShowPass(s => !s)} className="absolute right-3 top-1/
-{showPass ? <EyeOff size={16} /> : <Eye size={16} />}
+<input type={show ? "text" : "password"} value={pass} onChange={e => setPass(e.
+<button onClick={() => setShow(s => !s)} className="absolute right-3 top-1/2 -t
+{show ? <EyeOff size={16} /> : <Eye size={16} />}
 </button>
 </div>
 </div>
-{error && <p className="text-red-500 text-xs mt-3 text-center">{error}</p>}
-<button onClick={handleSubmit} disabled={loading} className={`w-full mt-5 py-3.5 ro
+{err && <p className="text-red-500 text-xs mt-3 text-center">{err}</p>}
+<button onClick={submit} disabled={loading} className={"w-full mt-5 py-3.5 rounded-
 {loading ? "Please wait..." : mode === "login" ? "Sign In" : "Create Account"}
 </button>
 </div>
 <p className="text-center text-xs text-gray-400 mt-4">
-{mode === "login" ? "Don't have an account? " : "Already have an account? "}
-<button onClick={() => { setMode(mode === "login" ? "signup" : "login"); setError("
+{mode === "login" ? "No account? " : "Have an account? "}
+<button onClick={() => { setMode(mode === "login" ? "signup" : "login"); setErr("")
 {mode === "login" ? "Sign up" : "Sign in"}
 </button>
 </p>
@@ -173,86 +146,43 @@ function BuildCard({ build, onClick }) {
 const [liked, setLiked] = useState(false);
 return (
 <div onClick={onClick} className="bg-white rounded-2xl shadow-sm border border-gray-100 o
-<div className="h-36 overflow-hidden bg-gray-100">
+<div className={"h-36 bg-gradient-to-br flex items-center justify-center " + (build.col
 {build.image
 ? <img src={build.image} alt={build.title} className="w-full h-full object-cover" /
-: <BuildPlaceholder color={build.color} title={build.title} />
-${DIFF
-pcs</s
-|| 0}
+: <Grid size={32} className="text-white/60" />
 }
 </div>
 <div className="p-4">
 <div className="flex items-start justify-between mb-1">
-<h3 className="font-semibold text-gray-900 text-sm leading-tight">{build.title}</h3
-<span className={`text-xs px-2 py-0.5 rounded-full font-medium ml-2 shrink-0 </div>
+<h3 className="font-semibold text-gray-900 text-sm">{build.title}</h3>
+<span className={"text-xs px-2 py-0.5 rounded-full font-medium ml-2 shrink-0 </div>
 <p className="text-xs text-gray-400 mb-3">by {build.author}</p>
 <div className="flex items-center justify-between text-xs text-gray-500">
 <span className="flex items-center gap-1"><Layers size={12} />{build.pieces} <span className="flex items-center gap-1"><BookOpen size={12} />{build.steps <button onClick={e => { e.stopPropagation(); setLiked(l => !l); }} className="flex
 <Heart size={12} className={liked ? "fill-red-400 text-red-400" : ""} />
-<span>{liked ? (build.likes || 0) + 1 : (build.likes || 0)}</span>
-</button>
-</div>
-<div className="flex flex-wrap gap-1 mt-3">
-{(build.tags || []).slice(0, 2).map(t => (
-<span key={t} className="text-xs bg-gray-100 text-gray-500 px-2 py-0.5 rounded-fu
-))}
-</div>
-</div>
-</div>
-);
-}
-function BuildDetail({ build, onClose, onViewInstructions }) {
-return (
-<div className="fixed inset-0 bg-black/40 z-50 flex items-end sm:items-center justify-cen
-<div className="bg-white rounded-t-3xl sm:rounded-2xl w-full sm:max-w-md max-h-[90vh] o
-<div className="relative h-48 bg-gray-100 overflow-hidden">
-{build.image
-? <img src={build.image} alt={build.title} className="w-full h-full object-cover"
-: <BuildPlaceholder color={build.color} title={build.title} />
-}
-<button onClick={onClose} className="absolute top-4 right-4 bg-white/80 rounded-ful
-</div>
-<div className="p-6">
-<div className="flex items-start justify-between mb-1">
-<h2 className="text-xl font-bold text-gray-900">{build.title}</h2>
-<span className={`text-xs px-2 py-1 rounded-full font-medium ${DIFFICULTY_COLORS[
-["Like
-</div>
-<p className="text-sm text-gray-400 mb-4">by {build.author}</p>
-<div className="grid grid-cols-3 gap-3 mb-5">
-{[["Pieces", build.pieces, Layers], ["Steps", build.steps || 0, BookOpen], <div key={label} className="bg-gray-50 rounded-xl p-3 text-center">
-<Icon size={16} className="mx-auto mb-1 text-gray-400" />
-<p className="font-bold text-gray-800">{val}</p>
-<p className="text-xs text-gray-400">{label}</p>
-</div>
-))}
-</div>
-<div className="flex flex-wrap gap-1 mb-5">
-{(build.tags || []).map(t => <span key={t} className="text-sm bg-gray-100 text-gr
-</div>
-<button onClick={() => onViewInstructions(build)} className="w-full bg-gray-900 tex
-<BookOpen size={16} /> View Step-by-Step Instructions
+<span>{liked ? (build.likes || 0) + 1 : build.likes || 0}</span>
 </button>
 </div>
 </div>
 </div>
+" + (D
+pcs</s
+|| 0}
 );
 }
 function HomePage({ onViewBuild }) {
-const [query, setQuery] = useState("");
+const [q, setQ] = useState("");
 const [filter, setFilter] = useState("All");
-const [communityBuilds, setCommunityBuilds] = useState([]);
+const [extra, setExtra] = useState([]);
 useEffect(() => {
-const unsub = onSnapshot(collection(db, "builds"), snap => {
-setCommunityBuilds(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+return onSnapshot(collection(db, "builds"), snap => {
+setExtra(snap.docs.map(d => ({ id: d.id, ...d.data() })));
 });
-return unsub;
 }, []);
-const allBuilds = [...SAMPLE_BUILDS, ...communityBuilds];
-const filtered = allBuilds.filter(b =>
+const all = [...BUILDS, ...extra];
+const filtered = all.filter(b =>
 (filter === "All" || b.difficulty === filter) &&
-((b.title || "").toLowerCase().includes(query.toLowerCase()) || (b.author || "").toLowerC
+(b.title || "").toLowerCase().includes(q.toLowerCase())
 );
 return (
 <div className="pb-24">
@@ -261,59 +191,134 @@ return (
 <p className="text-sm text-gray-400 mb-4">Browse the community's creations</p>
 <div className="relative mb-4">
 <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400
-<input value={query} onChange={e => setQuery(e.target.value)} placeholder="Search b
+<input value={q} onChange={e => setQ(e.target.value)} placeholder="Search builds...
 </div>
 <div className="flex gap-2 overflow-x-auto pb-1">
 {["All", "Beginner", "Intermediate", "Advanced"].map(f => (
-<button key={f} onClick={() => setFilter(f)} className={`shrink-0 px-4 py-1.5 rou
+<button key={f} onClick={() => setFilter(f)} className={"shrink-0 px-4 py-1.5 rou
+{f}
+</button>
 ))}
 </div>
 </div>
-{filtered.length === 0
-? <div className="text-center py-16 text-gray-400"><p className="text-4xl mb-3">?</p>
-: <div className="px-4 grid grid-cols-2 gap-3">{filtered.map(b => <BuildCard key={b.i
-}
+<div className="px-4 grid grid-cols-2 gap-3">
+{filtered.map(b => <BuildCard key={b.id} build={b} onClick={() => onViewBuild(b)} />)
+</div>
 </div>
 );
 }
-function CommunityPage({ currentUser }) {
+function PostCard({ post, user }) {
+const [showC, setShowC] = useState(false);
+const [text, setText] = useState("");
+const liked = (post.likes || []).includes(user.uid);
+const toggleLike = () => {
+updateDoc(doc(db, "posts", post.id), {
+likes: liked ? arrayRemove(user.uid) : arrayUnion(user.uid)
+});
+};
+const addComment = async () => {
+if (!text.trim()) return;
+await updateDoc(doc(db, "posts", post.id), {
+comments: arrayUnion({
+id: Date.now().toString(),
+userId: user.uid,
+username: user.displayName || "Anonymous",
+text: text.trim(),
+time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+})
+});
+setText("");
+};
+const ago = post.createdAt?.toDate
+? (() => {
+const d = Date.now() - post.createdAt.toDate();
+const m = Math.floor(d / 60000);
+if (m < 1) return "Just now";
+if (m < 60) return m + "m ago";
+return Math.floor(m / 60) + "h ago";
+})()
+: "Just now";
+return (
+<div className="bg-white border-b border-gray-100">
+<div className="flex items-center gap-3 px-4 py-3">
+<div className={"w-9 h-9 rounded-full bg-gradient-to-br flex items-center justify-cen
+{(post.authorName || "?")[0].toUpperCase()}
+</div>
+<div>
+<p className="text-sm font-semibold text-gray-900">{post.authorName}</p>
+<p className="text-xs text-gray-400">{ago}</p>
+</div>
+</div>
+{post.image
+? <img src={post.image} className="w-full aspect-video object-cover" />
+: <div className="w-full aspect-video bg-gray-100 flex items-center justify-center"><
+}
+<div className="px-4 pt-3 pb-2">
+<div className="flex items-center gap-4 mb-2">
+<button onClick={toggleLike} className="flex items-center gap-1.5">
+<Heart size={22} className={liked ? "fill-red-500 text-red-500" : "text-gray-600"
+<span className="text-sm font-semibold text-gray-700">{(post.likes || []).length}
+</button>
+<button onClick={() => setShowC(s => !s)} className="flex items-center gap-1.5">
+<MessageCircle size={22} className="text-gray-600" />
+<span className="text-sm font-semibold text-gray-700">{(post.comments || []).leng
+</button>
+</div>
+<p className="text-sm text-gray-800 mb-2">
+<span className="font-semibold mr-1">{post.authorName}</span>{post.caption}
+</p>
+</div>
+{showC && (
+<div className="px-4 pb-2 space-y-1">
+{(post.comments || []).map(c => (
+<div key={c.id} className="flex gap-2 text-sm">
+<span className="font-semibold text-gray-800">{c.username}</span>
+<span className="text-gray-600">{c.text}</span>
+</div>
+))}
+</div>
+)}
+<div className="flex items-center gap-3 px-4 py-3 border-t border-gray-50">
+<div className={"w-7 h-7 rounded-full bg-gradient-to-br flex items-center justify-cen
+{(user.displayName || "?")[0].toUpperCase()}
+</div>
+<input value={text} onChange={e => setText(e.target.value)} onKeyDown={e => e.key ===
+{text.trim() && <button onClick={addComment}><Send size={18} className="text-gray-900
+</div>
+</div>
+);
+}
+function CommunityPage({ user }) {
 const [posts, setPosts] = useState([]);
-const [showNewPost, setShowNewPost] = useState(false);
-const [newCaption, setNewCaption] = useState("");
-const [newPhoto, setNewPhoto] = useState(null);
-const [posting, setPosting] = useState(false);
-const [newPosted, setNewPosted] = useState(false);
+const [show, setShow] = useState(false);
+const [caption, setCaption] = useState("");
+const [photo, setPhoto] = useState(null);
+const [done, setDone] = useState(false);
 const fileRef = useRef(null);
 useEffect(() => {
 const q = query(collection(db, "posts"), orderBy("createdAt", "desc"));
-const unsub = onSnapshot(q, snap => {
-setPosts(snap.docs.map(d => ({ id: d.id, ...d.data() })));
-});
-return unsub;
+return onSnapshot(q, snap => setPosts(snap.docs.map(d => ({ id: d.id, ...d.data() }))));
 }, []);
-const handleFile = async (e) => {
-const file = e.target.files?.[0];
-if (!file) return;
-setNewPhoto(await readFileAsDataUrl(file));
+const handleFile = async e => {
+const f = e.target.files[0];
+if (f) setPhoto(await readFile(f));
 };
 const submitPost = async () => {
-if (!newCaption.trim() || posting) return;
-setPosting(true);
+if (!caption.trim()) return;
 await addDoc(collection(db, "posts"), {
-authorId: currentUser.uid,
-authorName: currentUser.displayName || "Anonymous",
-caption: newCaption.trim(),
-image: newPhoto || null,
+authorId: user.uid,
+authorName: user.displayName || "Anonymous",
+caption: caption.trim(),
+image: photo || null,
 likes: [],
 comments: [],
-createdAt: serverTimestamp(),
+createdAt: serverTimestamp()
 });
-setNewCaption("");
-setNewPhoto(null);
-setShowNewPost(false);
-setNewPosted(true);
-setPosting(false);
-setTimeout(() => setNewPosted(false), 3000);
+setCaption("");
+setPhoto(null);
+setShow(false);
+setDone(true);
+setTimeout(() => setDone(false), 3000);
 };
 return (
 <div className="pb-24">
@@ -322,47 +327,48 @@ return (
 <h1 className="text-2xl font-bold text-gray-900">Community</h1>
 <p className="text-sm text-gray-400">See what everyone's building</p>
 </div>
-<button onClick={() => setShowNewPost(true)} className="bg-gray-900 text-white <Camera size={18} />
+<button onClick={() => setShow(true)} className="bg-gray-900 text-white rounded-full
+<Camera size={18} />
 </button>
 </div>
-{newPosted && (
+{done && (
 <div className="mx-4 mb-3 bg-emerald-50 border border-emerald-200 rounded-xl px-4 py-
-<Check size={16} /> Your post is live!
+<Check size={16} /> Post is live!
 </div>
-rounde
 )}
 {posts.length === 0 && (
 <div className="text-center py-16 text-gray-400">
-<p className="text-4xl mb-3">?</p>
-<p className="font-medium">No posts yet</p>
-<p className="text-xs mt-1">Be the first to share a build!</p>
+<p className="font-medium">No posts yet - be the first!</p>
 </div>
 )}
 <div className="divide-y divide-gray-100">
-{posts.map(post => <PostCard key={post.id} post={post} currentUser={currentUser} />)}
+{posts.map(p => <PostCard key={p.id} post={p} user={user} />)}
 </div>
-{showNewPost && (
+{show && (
 <div className="fixed inset-0 bg-black/40 z-50 flex items-end justify-center" onClick
 <div className="bg-white rounded-t-3xl w-full max-w-lg p-6" onClick={e => e.stopPro
 <div className="flex items-center justify-between mb-5">
 <h2 className="text-lg font-bold text-gray-900">New Post</h2>
-<button onClick={() => setShowNewPost(false)}><X size={20} className="text-gray
+<button onClick={() => setShow(false)}><X size={20} className="text-gray-400" /
 </div>
-{newPhoto ? (
-<div className="relative rounded-2xl overflow-hidden aspect-video bg-gray-100 m
-<img src={newPhoto} alt="Post" className="w-full h-full object-cover" />
-<button onClick={() => setNewPhoto(null)} className="absolute top-2 right-2 b
+{photo
+? (
+<div className="relative rounded-2xl overflow-hidden aspect-video bg-gray-100
+<img src={photo} className="w-full h-full object-cover" />
+<button onClick={() => setPhoto(null)} className="absolute top-2 right-2 bg
 </div>
-) : (
-<div onClick={() => fileRef.current?.click()} className="border-2 border-dashed
+)
+: (
+<div onClick={() => fileRef.current?.click()} className="border-2 border-dash
 <Image size={28} className="text-gray-300" />
-<p className="text-sm font-medium text-gray-500">Add a photo (optional)</p>
-<input ref={fileRef} type="file" accept="image/*" className="hidden" onChange
-</div>
-placeh
-)}
-<textarea value={newCaption} onChange={e => setNewCaption(e.target.value)} <button onClick={submitPost} disabled={posting} className={`w-full py-3.5 rounded
-{posting ? "Posting..." : "Share with Community"}
+<p className="text-sm text-gray-400">Add photo (optional)</p>
+<input ref={fileRef} type="file" accept="image/*" className="hidden" </div>
+onChan
+)
+}
+<textarea value={caption} onChange={e => setCaption(e.target.value)} placeholder=
+<button onClick={submitPost} className={"w-full py-3.5 rounded-xl font-semibold t
+Share with Community
 </button>
 </div>
 </div>
@@ -370,105 +376,20 @@ placeh
 </div>
 );
 }
-function PostCard({ post, currentUser }) {
-const [showComments, setShowComments] = useState(false);
-const [commentText, setCommentText] = useState("");
-const inputRef = useRef(null);
-const liked = (post.likes || []).includes(currentUser.uid);
-const toggleLike = async () => {
-const ref = doc(db, "posts", post.id);
-await updateDoc(ref, { likes: liked ? arrayRemove(currentUser.uid) : arrayUnion(currentUs
-};
-const submitComment = async () => {
-const text = commentText.trim();
-if (!text) return;
-const comment = {
-id: Date.now().toString(),
-userId: currentUser.uid,
-username: currentUser.displayName || "Anonymous",
-text,
-time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
-};
-await updateDoc(doc(db, "posts", post.id), { comments: arrayUnion(comment) });
-setCommentText("");
-};
-const timeAgo = post.createdAt?.toDate ? (() => {
-const diff = Date.now() - post.createdAt.toDate().getTime();
-const m = Math.floor(diff / 60000);
-if (m < 1) return "Just now";
-if (m < 60) return m + "m ago";
-if (m < 1440) return Math.floor(m / 60) + "h ago";
-return Math.floor(m / 1440) + "d ago";
-})() : "Just now";
-return (
-<div className="bg-white border-b border-gray-100">
-<div className="flex items-center gap-3 px-4 py-3">
-<div className={`w-9 h-9 rounded-full bg-gradient-to-br ${getGradient(post.authorId)}
-{(post.authorName || "?")[0].toUpperCase()}
-</div>
-<div className="flex-1 min-w-0">
-<p className="text-sm font-semibold text-gray-900">{post.authorName}</p>
-<p className="text-xs text-gray-400">{timeAgo}</p>
-</div>
-</div>
-{post.image
-? <img src={post.image} alt="" className="w-full aspect-video object-cover" />
-: <div className="w-full aspect-video bg-gradient-to-br from-gray-100 to-gray-200 fle
-}
-<div className="px-4 pt-3 pb-1">
-<div className="flex items-center gap-4 mb-2">
-<button onClick={toggleLike} className="flex items-center gap-1.5 active:scale-90 t
-<Heart size={22} className={liked ? "fill-red-500 text-red-500" : "text-gray-600"
-<span className="text-sm font-semibold text-gray-700">{(post.likes || []).length}
-</button>
-<button onClick={() => { setShowComments(s => !s); setTimeout(() => inputRef.curren
-<MessageCircle size={22} className="text-gray-600" />
-<span className="text-sm font-semibold text-gray-700">{(post.comments || []).leng
-</button>
-</div>
-<p className="text-sm text-gray-800 mb-3"><span className="font-semibold mr-1">{post.
-</div>
-{(post.comments || []).length > 0 && !showComments && (
-<button onClick={() => setShowComments(true)} className="px-4 pb-2 text-xs text-gray-
-View all {post.comments.length} comment{post.comments.length !== 1 ? "s" : ""}
-</button>
-)}
-{showComments && (
-<div className="px-4 pb-2 space-y-2">
-{(post.comments || []).map(c => (
-<div key={c.id} className="flex gap-2 text-sm">
-<span className="font-semibold text-gray-800 shrink-0">{c.username}</span>
-<span className="text-gray-600 flex-1">{c.text}</span>
-<span className="text-xs text-gray-400 shrink-0">{c.time}</span>
-</div>
-))}
-</div>
-)}
-<div className="flex items-center gap-3 px-4 py-3 border-t border-gray-50">
-<div className={`w-7 h-7 rounded-full bg-gradient-to-br ${getGradient(currentUser.uid
-{(currentUser.displayName || "?")[0].toUpperCase()}
-</div>
-<input ref={inputRef} value={commentText} onChange={e => setCommentText(e.target.valu
-{commentText.trim() && <button onClick={submitComment}><Send size={18} className="tex
-</div>
-</div>
-);
-}
-function UploadPage({ currentUser }) {
+function UploadPage({ user }) {
 const [step, setStep] = useState(1);
 const [form, setForm] = useState({ title: "", pieces: "", difficulty: "Beginner", tags: "",
-const [submitted, setSubmitted] = useState(false);
+const [done, setDone] = useState(false);
 const [photo, setPhoto] = useState(null);
-const [uploading, setUploading] = useState(false);
+const [saving, setSaving] = useState(false);
 const fileRef = useRef(null);
-const update = (k, v) => setForm(f => ({ ...f, [k]: v }));
-const handleFile = async (e) => {
-const file = e.target.files?.[0];
-if (!file) return;
-setPhoto(await readFileAsDataUrl(file));
+const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
+const handleFile = async e => {
+const f = e.target.files[0];
+if (f) setPhoto(await readFile(f));
 };
-const handlePublish = async () => {
-setUploading(true);
+const publish = async () => {
+setSaving(true);
 await addDoc(collection(db, "builds"), {
 title: form.title,
 pieces: parseInt(form.pieces) || 0,
@@ -478,219 +399,214 @@ image: photo || null,
 color: "from-gray-200 to-gray-300",
 likes: 0,
 steps: 0,
-author: currentUser.displayName || "Anonymous",
-authorId: currentUser.uid,
+author: user.displayName || "Anonymous",
+authorId: user.uid,
 desc: form.desc,
-createdAt: serverTimestamp(),
+createdAt: serverTimestamp()
 });
-setUploading(false);
-setSubmitted(true);
+setSaving(false);
+setDone(true);
 };
-if (submitted) return (
-<div className="flex flex-col items-center justify-center h-full px-8 text-center pb-24 p
-<div className="text-6xl mb-4">!</div>
+if (done) return (
+<div className="flex flex-col items-center justify-center px-8 text-center pb-24 pt-16">
 <h2 className="text-xl font-bold text-gray-900 mb-2">Build Uploaded!</h2>
-<p className="text-sm text-gray-400 mb-6">Your creation is now live for everyone to dis
-<button onClick={() => { setSubmitted(false); setStep(1); setForm({ title: "", pieces:
+<p className="text-sm text-gray-400 mb-6">Your creation is live for everyone to discove
+<button onClick={() => { setDone(false); setStep(1); setForm({ title: "", pieces: "", d
+Upload Another
+</button>
 </div>
 );
 return (
 <div className="pb-24 px-4 pt-6">
 <h1 className="text-2xl font-bold text-gray-900 mb-1">Upload a Build</h1>
 <p className="text-sm text-gray-400 mb-6">Share your creation with the community</p>
-<div className="flex items-center gap-2 mb-6">
-{[1, 2].map(s => (
-<div key={s} className="flex items-center gap-2">
-<div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs fo
-{s < 2 && <div className={`h-0.5 w-12 transition-all ${step > s ? "bg-gray-900" :
-</div>
-))}
-<span className="text-xs text-gray-400 ml-2">{step === 1 ? "Build Details" : "Photos"
-</div>
 {step === 1 && (
 <div className="space-y-4">
-{[["Build Title", "title", "text", "e.g. My Epic Castle"], ["Number of Pieces", "pi
-<div key={key}>
-<label className="text-sm font-medium text-gray-700 block mb-1.5">{label}</labe
-<input type={type} value={form[key]} onChange={e => update(key, e.target.value)
+<div>
+<label className="text-sm font-medium text-gray-700 block mb-1.5">Build Title</la
+<input value={form.title} onChange={e => set("title", e.target.value)} placeholde
 </div>
-))}
+<div>
+<label className="text-sm font-medium text-gray-700 block mb-1.5">Number of Piece
+<input type="number" value={form.pieces} onChange={e => set("pieces", e.target.va
+</div>
 <div>
 <label className="text-sm font-medium text-gray-700 block mb-1.5">Difficulty</lab
 <div className="flex gap-2">
 {["Beginner", "Intermediate", "Advanced"].map(d => (
-<button key={d} onClick={() => update("difficulty", d)} className={`flex-1 py
+<button key={d} onClick={() => set("difficulty", d)} className={"flex-1 py-2.
+{d}
+</button>
 ))}
 </div>
 </div>
 <div>
 <label className="text-sm font-medium text-gray-700 block mb-1.5">Tags</label>
-<input value={form.tags} onChange={e => update("tags", e.target.value)} placehold
+<input value={form.tags} onChange={e => set("tags", e.target.value)} placeholder=
 </div>
 <div>
-</div>
-</div>
 <label className="text-sm font-medium text-gray-700 block mb-1.5">Description</la
-<textarea value={form.desc} onChange={e => update("desc", e.target.value)} placeh
-<button onClick={() => form.title && setStep(2)} className={`w-full py-3.5 rounded-
+<textarea value={form.desc} onChange={e => set("desc", e.target.value)} placehold
+</div>
+<button onClick={() => form.title && setStep(2)} className={"w-full py-3.5 rounded-
+Next: Add Photos
+</button>
+</div>
 )}
-bg-bla
 {step === 2 && (
 <div className="space-y-4">
-{photo ? (
+{photo
+? (
 <div className="relative rounded-2xl overflow-hidden aspect-video bg-gray-100">
-<img src={photo} alt="Build" className="w-full h-full object-cover" />
-<button onClick={() => setPhoto(null)} className="absolute top-2 right-2 </div>
-) : (
-<div onClick={() => fileRef.current?.click()} className="border-2 border-dashed b
-<Camera size={32} className="text-gray-300" />
-<p className="text-sm font-medium text-gray-500">Add a photo of your build</p>
-<span className="text-xs text-gray-400 bg-gray-100 px-4 py-2 rounded-xl">Choose
-<input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={
+<img src={photo} className="w-full h-full object-cover" />
+<button onClick={() => setPhoto(null)} className="absolute top-2 right-2 bg-b
 </div>
-)}
+)
+: (
+<div onClick={() => fileRef.current?.click()} className="border-2 border-dashed
+<Camera size={32} className="text-gray-300" />
+<p className="text-sm text-gray-500">Add a photo</p>
+<input ref={fileRef} type="file" accept="image/*" className="hidden" onChange
+</div>
+)
+}
 <div className="flex gap-3">
 <button onClick={() => setStep(1)} className="flex-1 py-3 rounded-xl border borde
-<button onClick={handlePublish} disabled={uploading} className={`flex-grow py-3 r
+<button onClick={publish} disabled={saving} className={"flex-grow py-3 rounded-xl
+{saving ? "Publishing..." : "Publish Build"}
+</button>
 </div>
 </div>
 )}
 </div>
 );
 }
-function InstructionsPage({ preloadBuild, currentUser }) {
-const [selectedBuild, setSelectedBuild] = useState(preloadBuild || null);
+function GuidePage({ user }) {
+const [build, setBuild] = useState(null);
 const [steps, setSteps] = useState([]);
-const [newStep, setNewStep] = useState({ title: "", desc: "" });
-const [published, setPublished] = useState(false);
-const [saving, setSaving] = useState(false);
-const addStep = () => {
-if (!newStep.title) return;
-setSteps(s => [...s, { ...newStep, id: Date.now() }]);
-setNewStep({ title: "", desc: "" });
+const [step, setStep] = useState({ title: "", desc: "" });
+const [done, setDone] = useState(false);
+const add = () => {
+if (!step.title) return;
+setSteps(s => [...s, { ...step, id: Date.now() }]);
+setStep({ title: "", desc: "" });
 };
-const publishInstructions = async () => {
-if (!selectedBuild || steps.length === 0) return;
-setSaving(true);
+const publish = async () => {
 await addDoc(collection(db, "instructions"), {
-buildId: selectedBuild.id?.toString(),
-buildTitle: selectedBuild.title,
-authorId: currentUser.uid,
-authorName: currentUser.displayName,
-steps,
-createdAt: serverTimestamp(),
+buildId: build.id?.toString(),
+buildTitle: build.title,
+authorId: user.uid,
+authorName: user.displayName,
+steps: steps,
+createdAt: serverTimestamp()
 });
-setSaving(false);
-setPublished(true);
+setDone(true);
 };
-if (published) return (
-<div className="flex flex-col items-center justify-center h-full px-8 text-center pb-24 p
+if (done) return (
+<div className="flex flex-col items-center justify-center px-8 text-center pb-24 pt-16">
 <h2 className="text-xl font-bold text-gray-900 mb-2">Instructions Published!</h2>
-<p className="text-sm text-gray-400 mb-6">Builders can now follow your step-by-step gui
-<button onClick={() => { setPublished(false); setSteps([]); setSelectedBuild(null); }}
+<button onClick={() => { setDone(false); setSteps([]); setBuild(null); }} className="mt
+Create Another
+</button>
 </div>
 );
 return (
 <div className="pb-24 px-4 pt-6">
 <h1 className="text-2xl font-bold text-gray-900 mb-1">Instruction Builder</h1>
-<p className="text-sm text-gray-400 mb-5">Create step-by-step guides for your builds</p
-{!selectedBuild ? (
-<>
-<p className="text-sm font-medium text-gray-700 mb-3">Choose a build:</p>
+<p className="text-sm text-gray-400 mb-5">Create step-by-step guides</p>
+{!build ? (
 <div className="space-y-2">
-{SAMPLE_BUILDS.map(b => (
-<button key={b.id} onClick={() => setSelectedBuild(b)} className="w-full flex i
-<div className={`w-12 h-12 rounded-lg bg-gradient-to-br ${b.color} flex items
-<Grid size={20} className="text-gray-500" />
+{BUILDS.map(b => (
+<button key={b.id} onClick={() => setBuild(b)} className="w-full flex items-cente
+<div className={"w-12 h-12 rounded-lg bg-gradient-to-br flex items-center justi
+<Grid size={18} className="text-white/60" />
 </div>
 <div className="flex-1">
 <p className="font-semibold text-gray-900 text-sm">{b.title}</p>
-<p className="text-xs text-gray-400">{b.pieces} pieces - {b.difficulty}</p>
+<p className="text-xs text-gray-400">{b.pieces} pcs - {b.difficulty}</p>
 </div>
+<ChevronRight size={16} className="text-gray-300" />
 </button>
-<ChevronRight size={16} className="text-gray-300 shrink-0" />
 ))}
 </div>
-</>
 ) : (
-<>
+<div>
 <div className="flex items-center gap-3 bg-gray-50 rounded-xl p-3 mb-5">
-<div className={`w-12 h-12 rounded-lg bg-gradient-to-br ${selectedBuild.color ||
-<Grid size={18} className="text-gray-500" />
+<div className={"w-12 h-12 rounded-lg bg-gradient-to-br flex items-center justify
+<Grid size={18} className="text-white/60" />
 </div>
 <div className="flex-1">
-<p className="font-semibold text-sm text-gray-900">{selectedBuild.title}</p>
-<p className="text-xs text-gray-400">{selectedBuild.pieces} pieces</p>
+<p className="font-semibold text-sm text-gray-900">{build.title}</p>
 </div>
-<button onClick={() => setSelectedBuild(null)} className="text-xs text-gray-400 u
+<button onClick={() => setBuild(null)} className="text-xs text-gray-400 underline
 </div>
+{steps.length === 0 && <p className="text-sm text-gray-400 text-center py-4 mb-4">N
 <div className="space-y-3 mb-5">
-{steps.length === 0 && <p className="text-sm text-gray-400 text-center py-4">No s
 {steps.map((s, i) => (
 <div key={s.id} className="bg-white border border-gray-100 rounded-xl p-4 shado
-<div className="flex items-start gap-3">
+<div className="flex gap-3">
 <span className="bg-gray-900 text-white text-xs font-bold w-6 h-6 rounded-f
 <div>
 <p className="font-semibold text-sm text-gray-900">{s.title}</p>
-{s.desc && <p className="text-xs text-gray-400 mt-0.5">{s.desc}</p>}
+{s.desc && <p className="text-xs text-gray-400">{s.desc}</p>}
 </div>
 </div>
-<button onClick={() => setSteps(prev => prev.filter(x => x.id !== s.id))} cla
+<button onClick={() => setSteps(prev => prev.filter(x => x.id !== s.id))}>
+<Trash2 size={15} className="text-gray-300" />
+</button>
 </div>
 ))}
 </div>
 <div className="bg-gray-50 rounded-xl p-4 mb-4 space-y-3">
-<p className="text-xs font-semibold text-gray-600 uppercase tracking-wide">Add St
-<input value={newStep.title} onChange={e => setNewStep(n => ({ ...n, title: e.tar
-<textarea value={newStep.desc} onChange={e => setNewStep(n => ({ ...n, desc: e.ta
-<button onClick={addStep} className={`w-full py-3 rounded-xl text-sm font-semibol
+<input value={step.title} onChange={e => setStep(n => ({ ...n, title: e.target.va
+<textarea value={step.desc} onChange={e => setStep(n => ({ ...n, desc: e.target.v
+<button onClick={add} className={"w-full py-3 rounded-xl text-sm font-semibold fl
+<Plus size={16} />Add Step
+</button>
 </div>
 {steps.length > 0 && (
-<button onClick={publishInstructions} disabled={saving} className={`w-full {saving ? "Publishing..." : "Publish Instructions (" + steps.length + " steps)"
+<button onClick={publish} className="w-full py-3.5 bg-gray-900 text-white rounded
+Publish ({steps.length} steps)
 </button>
-py-3.5
 )}
-</>
+</div>
 )}
 </div>
 );
 }
-function ProfilePage({ currentUser, onSignOut }) {
+function ProfilePage({ user, onSignOut }) {
 const [profile, setProfile] = useState(null);
-const [userBuilds, setUserBuilds] = useState([]);
+const [builds, setBuilds] = useState([]);
 const [editing, setEditing] = useState(false);
-const [editName, setEditName] = useState("");
-const [editBio, setEditBio] = useState("");
+const [name, setName] = useState("");
+const [bio, setBio] = useState("");
 const [saving, setSaving] = useState(false);
 const [photo, setPhoto] = useState(null);
 const fileRef = useRef(null);
 useEffect(() => {
-const unsub = onSnapshot(doc(db, "users", currentUser.uid), snap => {
-if (snap.exists()) setProfile(snap.data());
+return onSnapshot(doc(db, "users", user.uid), s => {
+if (s.exists()) setProfile(s.data());
 });
-return unsub;
-}, [currentUser.uid]);
+}, [user.uid]);
 useEffect(() => {
-const unsub = onSnapshot(
+return onSnapshot(
 query(collection(db, "builds"), orderBy("createdAt", "desc")),
-snap => setUserBuilds(snap.docs.filter(d => d.data().authorId === currentUser.uid).map(
+s => setBuilds(s.docs.filter(d => d.data().authorId === user.uid).map(d => ({ id: d.id,
 );
-return unsub;
-}, [currentUser.uid]);
-const handleFile = async (e) => {
-const file = e.target.files?.[0];
-if (!file) return;
-setPhoto(await readFileAsDataUrl(file));
+}, [user.uid]);
+const handleFile = async e => {
+const f = e.target.files[0];
+if (f) setPhoto(await readFile(f));
 };
-const saveProfile = async () => {
+const save = async () => {
 setSaving(true);
-const updates = { displayName: editName, bio: editBio };
-if (photo) updates.photoURL = photo;
-await updateDoc(doc(db, "users", currentUser.uid), updates);
-await updateProfile(auth.currentUser, { displayName: editName, ...(photo ? { photoURL: ph
-setSaving(false);
+const u = { displayName: name, bio: bio };
+if (photo) u.photoURL = photo;
+await updateDoc(doc(db, "users", user.uid), u);
+await updateProfile(auth.currentUser, { displayName: name, ...(photo ? { photoURL: setSaving(false);
 setEditing(false);
 setPhoto(null);
+photo
 };
 if (!profile) return (
 <div className="flex items-center justify-center h-64">
@@ -701,39 +617,43 @@ if (editing) return (
 <div className="pb-24 px-4 pt-6">
 <div className="flex items-center justify-between mb-6">
 <button onClick={() => setEditing(false)} className="flex items-center gap-2 text-sm
+<ArrowLeft size={16} />Cancel
+</button>
 <h1 className="text-base font-bold text-gray-900">Edit Profile</h1>
-<button onClick={saveProfile} disabled={saving} className="text-sm font-semibold text
-</div>
+<button onClick={save} className="text-sm font-semibold text-gray-900">{saving </div>
 <div className="flex flex-col items-center gap-3 mb-6">
 <div className="relative">
 {photo || profile.photoURL
-? <img src={photo || profile.photoURL} alt="" className="w-24 h-24 rounded-2xl ob
-: <div className={`w-24 h-24 rounded-2xl bg-gradient-to-br ${getGradient(currentU
+? <img src={photo || profile.photoURL} className="w-24 h-24 rounded-2xl object-co
+: <div className={"w-24 h-24 rounded-2xl bg-gradient-to-br flex items-center just
+? "Sav
 }
+<button onClick={() => fileRef.current?.click()} className="absolute -bottom-2 -rig
+<Camera size={14} />
+</button>
 </div>
+<input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handle
 </div>
 <div className="space-y-4">
 <div>
+<label className="text-sm font-medium text-gray-700 block mb-1.5">Name</label>
+<input value={name} onChange={e => setName(e.target.value)} className="w-full px-4
 </div>
 <div>
-</div>
-</div>
-</div>
-<button onClick={() => fileRef.current?.click()} className="absolute -bottom-2 -rig
-<input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handle
-<label className="text-sm font-medium text-gray-700 block mb-1.5">Display Name</lab
-<input value={editName} onChange={e => setEditName(e.target.value)} className="w-fu
 <label className="text-sm font-medium text-gray-700 block mb-1.5">Bio</label>
-<textarea value={editBio} onChange={e => setEditBio(e.target.value)} rows={3} class
-<button onClick={saveProfile} disabled={saving} className={`w-full py-3.5 rounded-xl
+<textarea value={bio} onChange={e => setBio(e.target.value)} rows={3} className="w-
+</div>
+<button onClick={save} className="w-full py-3.5 bg-gray-900 text-white rounded-xl fon
+</div>
+</div>
 );
 return (
 <div className="pb-24">
 <div className="px-4 pt-6 pb-4">
 <div className="flex items-center gap-4 mb-4">
 {profile.photoURL
-? <img src={profile.photoURL} alt="" className="w-16 h-16 rounded-2xl object-cove
-: <div className={`w-16 h-16 rounded-2xl bg-gradient-to-br ${getGradient(currentU
+? <img src={profile.photoURL} className="w-16 h-16 rounded-2xl object-cover shado
+: <div className={"w-16 h-16 rounded-2xl bg-gradient-to-br flex items-center just
 }
 <div>
 <h2 className="text-xl font-bold text-gray-900">{profile.displayName}</h2>
@@ -742,15 +662,15 @@ return (
 </div>
 <p className="text-sm text-gray-500 mb-4">{profile.bio}</p>
 <div className="grid grid-cols-3 gap-3 mb-4">
-{[["Builds", userBuilds.length], ["Followers", (profile.followers || []).length], [
-<div key={label} className="bg-gray-50 rounded-xl py-3 text-center">
-<p className="font-bold text-gray-900">{val}</p>
-<p className="text-xs text-gray-400">{label}</p>
+{[["Builds", builds.length], ["Followers", (profile.followers || []).length], ["Fol
+<div key={l} className="bg-gray-50 rounded-xl py-3 text-center">
+<p className="font-bold text-gray-900">{v}</p>
+<p className="text-xs text-gray-400">{l}</p>
 </div>
 ))}
 </div>
 <div className="flex gap-2">
-<button onClick={() => { setEditName(profile.displayName); setEditBio(profile.bio);
+<button onClick={() => { setName(profile.displayName); setBio(profile.bio); setEdit
 <Edit3 size={14} />Edit Profile
 </button>
 <button onClick={onSignOut} className="py-2.5 px-4 border border-gray-200 rounded-x
@@ -758,120 +678,95 @@ return (
 </button>
 </div>
 </div>
-<div className="flex border-b border-gray-100 px-4 mb-4">
-<div className="flex-1 py-3 text-sm font-semibold border-b-2 border-gray-900 text-gra
+<div className="px-4 border-t border-gray-100 pt-4">
+<p className="text-sm font-semibold text-gray-700 mb-3">My Builds</p>
+{builds.length === 0
+? (
+<div className="text-center py-12">
+<Upload size={40} className="mx-auto text-gray-200 mb-2" />
+<p className="text-sm text-gray-400">No builds yet</p>
 </div>
-<div className="px-4">
-{userBuilds.length === 0
-? <div className="flex flex-col items-center justify-center text-center py-16 gap-3
-: <div className="grid grid-cols-2 gap-3">{userBuilds.map(b => <BuildCard key={b.id
+)
+: <div className="grid grid-cols-2 gap-3">{builds.map(b => <BuildCard key={b.id} bu
 }
 </div>
 </div>
 );
 }
-function HelpPage() {
-const [open, setOpen] = useState(null);
-const [msg, setMsg] = useState("");
-const [sent, setSent] = useState(false);
-const faqs = [
-["How do I upload a build?", "Tap the Upload tab, fill in your build details, then add a
-["How do I create instructions?", "Go to the Guide tab, pick a build, then add steps one
-["Can I edit my profile?", "Yes! Go to Profile and tap Edit Profile to update your name,
-["How do I like a post?", "Tap the heart icon on any post in the Community feed."],
-["Is BrickBuilder free?", "Absolutely - BrickBuilder is free for everyone!"],
-];
-return (
-<div className="pb-24 px-4 pt-6">
-<h1 className="text-2xl font-bold text-gray-900 mb-1">Help and Support</h1>
-<p className="text-sm text-gray-400 mb-6">Find answers or get in touch</p>
-<div className="space-y-2 mb-8">
-{faqs.map(([q, a], i) => (
-<div key={i} className="bg-white border border-gray-100 rounded-xl overflow-hidden
-<button onClick={() => setOpen(open === i ? null : i)} className="w-full flex ite
-<span className="text-sm font-medium text-gray-800 pr-3">{q}</span>
-<ChevronRight size={16} className={`text-gray-300 shrink-0 transition-transform
-</button>
-{open === i && <div className="px-4 pb-4 text-sm text-gray-500 border-t border-gr
-</div>
-))}
-</div>
-{sent ? (
-<div className="bg-gray-50 rounded-2xl p-6 text-center">
-<Check size={32} className="mx-auto text-emerald-500 mb-2" />
-<p className="font-semibold text-gray-800">Message Sent!</p>
-<p className="text-sm text-gray-400 mt-1">We will get back to you within 24 hours.<
-<button onClick={() => { setSent(false); setMsg(""); }} className="mt-4 text-sm tex
-</div>
-) : (
-<div className="bg-gray-50 rounded-2xl p-4 space-y-3">
-<textarea value={msg} onChange={e => setMsg(e.target.value)} placeholder="Describe
-<button onClick={() => msg && setSent(true)} className={`w-full py-3 rounded-xl tex
-<MessageCircle size={15} />Send Message
-</button>
-</div>
-)}
-</div>
-);
-}
-export default function BrickBuilderApp() {
-const [currentUser, setCurrentUser] = useState(undefined);
+export default function App() {
+const [user, setUser] = useState(undefined);
 const [tab, setTab] = useState("home");
 const [viewBuild, setViewBuild] = useState(null);
-const [instructionsBuild, setInstructionsBuild] = useState(null);
 useEffect(() => {
-const unsub = onAuthStateChanged(auth, user => setCurrentUser(user || null));
-return unsub;
+return onAuthStateChanged(auth, u => setUser(u || null));
 }, []);
-const handleSignOut = async () => {
+const signout = async () => {
 await signOut(auth);
-setCurrentUser(null);
+setUser(null);
 };
-if (currentUser === undefined) {
-return (
+if (user === undefined) return (
 <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-<div className="flex flex-col items-center gap-3">
-<div className="w-12 h-12 bg-gray-900 rounded-2xl flex items-center justify-center"
-<Grid size={20} className="text-white" />
-</div>
-<div className="w-6 h-6 border-2 border-gray-300 border-t-gray-900 rounded-full ani
-</div>
+<div className="w-8 h-8 border-2 border-gray-300 border-t-gray-900 rounded-full animate
 </div>
 );
-}
-if (!currentUser) return <AuthScreen onAuth={setCurrentUser} />;
+if (!user) return <AuthScreen onAuth={setUser} />;
 return (
-<div className="min-h-screen bg-gray-50 max-w-lg mx-auto relative font-sans">
+<div className="min-h-screen bg-gray-50 max-w-lg mx-auto relative">
 <div className="sticky top-0 z-40 bg-white/90 backdrop-blur border-b border-gray-100 px
 <div className="flex items-center gap-2">
 <div className="w-7 h-7 bg-gray-900 rounded-lg flex items-center justify-center">
 <Grid size={14} className="text-white" />
 </div>
-<span className="text-base font-bold text-gray-900 tracking-tight">BrickBuilder</sp
+<span className="text-base font-bold text-gray-900">BrickBuilder</span>
 </div>
-<div className={`w-8 h-8 rounded-full bg-gradient-to-br ${getGradient(currentUser.uid
-{(currentUser.displayName || "?")[0].toUpperCase()}
+<div className={"w-8 h-8 rounded-full bg-gradient-to-br flex items-center justify-cen
+{(user.displayName || "?")[0].toUpperCase()}
 </div>
 </div>
 <div className="overflow-y-auto">
-{tab === "home" && <HomePage onViewBuild={setViewBuild} currentUser={currentUser} />}
-{tab === "community" && <CommunityPage currentUser={currentUser} />}
-{tab === "upload" && <UploadPage currentUser={currentUser} />}
-{tab === "instructions" && <InstructionsPage preloadBuild={instructionsBuild} current
-{tab === "profile" && <ProfilePage currentUser={currentUser} onSignOut={handleSignOut
-{tab === "help" && <HelpPage />}
+{tab === "home" && <HomePage onViewBuild={setViewBuild} />}
+{tab === "community" && <CommunityPage user={user} />}
+{tab === "upload" && <UploadPage user={user} />}
+{tab === "guide" && <GuidePage user={user} />}
+{tab === "profile" && <ProfilePage user={user} onSignOut={signout} />}
 </div>
 {viewBuild && (
-<BuildDetail
-build={viewBuild}
-onClose={() => setViewBuild(null)}
-onViewInstructions={(b) => { setViewBuild(null); setInstructionsBuild(b); setTab("i
-/>
+<div className="fixed inset-0 bg-black/40 z-50 flex items-end justify-center" onClick
+<div className="bg-white rounded-t-3xl w-full max-w-md max-h-[90vh] overflow-y-auto
+<div className={"relative h-48 bg-gradient-to-br flex items-center justify-center
+{viewBuild.image
+? <img src={viewBuild.image} className="w-full h-full object-cover" />
+: <Grid size={48} className="text-white/40" />
+}
+<button onClick={() => setViewBuild(null)} className="absolute top-4 right-4 bg
+<X size={18} />
+</button>
+</div>
+<div className="p-6">
+<div className="flex items-start justify-between mb-1">
+<h2 className="text-xl font-bold text-gray-900">{viewBuild.title}</h2>
+<span className={"text-xs px-2 py-1 rounded-full font-medium " + (DIFF[viewBu
+</div>
+<p className="text-sm text-gray-400 mb-4">by {viewBuild.author}</p>
+<div className="grid grid-cols-3 gap-3 mb-5">
+{[["Pieces", viewBuild.pieces], ["Steps", viewBuild.steps || 0], ["Likes", vi
+<div key={l} className="bg-gray-50 rounded-xl p-3 text-center">
+<p className="font-bold text-gray-800">{v}</p>
+<p className="text-xs text-gray-400">{l}</p>
+</div>
+))}
+</div>
+<div className="flex flex-wrap gap-1">
+{(viewBuild.tags || []).map(t => <span key={t} className="text-sm bg-gray-100
+</div>
+</div>
+</div>
+</div>
 )}
 <nav className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-lg bg-white/95 ba
 <div className="flex justify-around">
-{NAV_ITEMS.map(({ id, label, icon: Icon }) => (
-<button key={id} onClick={() => { setTab(id); if (id !== "instructions") setInstr
+{NAV.map(({ id, label, icon: Icon }) => (
+<button key={id} onClick={() => setTab(id)} className={"flex flex-col items-cente
 <Icon size={20} strokeWidth={tab === id ? 2.5 : 1.8} />
 <span className="text-xs font-medium">{label}</span>
 </button>
