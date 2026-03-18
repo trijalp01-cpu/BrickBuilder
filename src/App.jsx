@@ -5,7 +5,7 @@ getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword,
 signOut, onAuthStateChanged, updateProfile
 } from "firebase/auth";
 import {
-getFirestore, collection, doc, addDoc, setDoc, getDoc, getDocs,
+getFirestore, collection, doc, addDoc, setDoc, getDoc,
 onSnapshot, updateDoc, query, orderBy, serverTimestamp, arrayUnion, arrayRemove
 } from "firebase/firestore";
 import {
@@ -13,7 +13,6 @@ Search, Upload, BookOpen, Users, Home, User, Plus, Star, Heart,
 MessageCircle, ChevronRight, Grid, Layers, ArrowLeft, Trash2,
 Edit3, X, Check, Send, Image, Sun, Moon, Camera, LogOut, Mail, Lock, Eye, EyeOff
 } from "lucide-react";
-// ── Firebase config ──────────────────────────────────────────────────────────
 const firebaseConfig = {
 apiKey: "AIzaSyDyYk7LbmhpTXMuOEBhMMGFGFY-YHWEYps",
 authDomain: "brickbuilderz.firebaseapp.com",
@@ -25,7 +24,6 @@ appId: "1:984904538590:web:6a9e4cecb227027031654f"
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
-// ── Constants ────────────────────────────────────────────────────────────────
 const SAMPLE_BUILDS = [
 { id: 1, title: "Medieval Castle", author: "BrickMaster99", pieces: 1240, likes: 342, steps
 { id: 2, title: "Space Rocket", author: "CosmicBuilder", pieces: 560, likes: 189, steps: 12
@@ -55,7 +53,6 @@ const NAV_ITEMS = [
 { id: "instructions", label: "Guide", icon: BookOpen },
 { id: "profile", label: "Profile", icon: User },
 ];
-// ── Helpers ──────────────────────────────────────────────────────────────────
 function readFileAsDataUrl(file) {
 return new Promise((resolve) => {
 const reader = new FileReader();
@@ -69,19 +66,13 @@ let hash = 0;
 for (let i = 0; i < uid.length; i++) hash = uid.charCodeAt(i) + ((hash << 5) - hash);
 return AVATAR_GRADIENTS[Math.abs(hash) % AVATAR_GRADIENTS.length];
 }
-function Avatar({ user, size = "sm" }) {
-const sizes = { sm: "w-9 h-9 text-sm", md: "w-12 h-12 text-base", lg: "w-16 h-16 text-2xl",
-const gradient = getGradient(user?.uid || user?.username);
-if (user?.photoURL) {
-return <img src={user.photoURL} alt={user.displayName} className={`${sizes[size]} rounded
-}
+function BuildPlaceholder({ color, title }) {
 return (
 </div>
-<div className={`${sizes[size]} rounded-full bg-gradient-to-br ${gradient} flex items-cen
-{(user?.displayName || user?.username || "?")[0].toUpperCase()}
+<div className={`w-full h-full bg-gradient-to-br ${color || "from-gray-200 to-gray-300"}
+<span className="text-gray-500 font-bold text-xs text-center px-2">{title}</span>
 );
 }
-// ── Auth Screen ──────────────────────────────────────────────────────────────
 function AuthScreen({ onAuth }) {
 const [mode, setMode] = useState("login");
 const [email, setEmail] = useState("");
@@ -91,7 +82,8 @@ const [showPass, setShowPass] = useState(false);
 const [error, setError] = useState("");
 const [loading, setLoading] = useState(false);
 const handleSubmit = async () => {
-setError(""); setLoading(true);
+setError("");
+setLoading(true);
 try {
 if (mode === "signup") {
 if (!username.trim()) { setError("Username is required"); setLoading(false); return;
@@ -101,8 +93,9 @@ await setDoc(doc(db, "users", cred.user.uid), {
 uid: cred.user.uid,
 displayName: username.trim(),
 email: email,
-bio: "New to BrickBuilder ",
-followers: [], following: [],
+bio: "New to BrickBuilder",
+followers: [],
+following: [],
 createdAt: serverTimestamp(),
 photoURL: null,
 });
@@ -132,7 +125,7 @@ return (
 <Grid size={24} className="text-white" />
 </div>
 <h1 className="text-3xl font-bold text-gray-900 tracking-tight">BrickBuilder</h1>
-<p className="text-gray-400 text-sm mt-1">Discover & share LEGO builds</p>
+<p className="text-gray-400 text-sm mt-1">Discover and share LEGO builds</p>
 </div>
 <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
 <div className="flex rounded-xl bg-gray-100 p-1 mb-6">
@@ -163,7 +156,7 @@ return (
 </div>
 {error && <p className="text-red-500 text-xs mt-3 text-center">{error}</p>}
 <button onClick={handleSubmit} disabled={loading} className={`w-full mt-5 py-3.5 ro
-{loading ? "Please wait…" : mode === "login" ? "Sign In" : "Create Account"}
+{loading ? "Please wait..." : mode === "login" ? "Sign In" : "Create Account"}
 </button>
 </div>
 <p className="text-center text-xs text-gray-400 mt-4">
@@ -176,15 +169,14 @@ return (
 </div>
 );
 }
-// ── Build Card ───────────────────────────────────────────────────────────────
 function BuildCard({ build, onClick }) {
 const [liked, setLiked] = useState(false);
 return (
 <div onClick={onClick} className="bg-white rounded-2xl shadow-sm border border-gray-100 o
-<div className="h-36 overflow-hidden bg-gray-100 flex items-center justify-center">
+<div className="h-36 overflow-hidden bg-gray-100">
 {build.image
 ? <img src={build.image} alt={build.title} className="w-full h-full object-cover" /
-: <span className="text-6xl">{build.emoji || " "}</span>
+: <BuildPlaceholder color={build.color} title={build.title} />
 ${DIFF
 pcs</s
 || 0}
@@ -210,16 +202,14 @@ pcs</s
 </div>
 );
 }
-// ── Build Detail Modal ───────────────────────────────────────────────────────
 function BuildDetail({ build, onClose, onViewInstructions }) {
 return (
 <div className="fixed inset-0 bg-black/40 z-50 flex items-end sm:items-center justify-cen
 <div className="bg-white rounded-t-3xl sm:rounded-2xl w-full sm:max-w-md max-h-[90vh] o
-<div className="relative h-48 bg-gray-100 overflow-hidden flex items-center justify-c
+<div className="relative h-48 bg-gray-100 overflow-hidden">
 {build.image
 ? <img src={build.image} alt={build.title} className="w-full h-full object-cover"
-: <span className="text-8xl">{build.emoji || " "}</span>
-["Like
+: <BuildPlaceholder color={build.color} title={build.title} />
 }
 <button onClick={onClose} className="absolute top-4 right-4 bg-white/80 rounded-ful
 </div>
@@ -227,6 +217,7 @@ return (
 <div className="flex items-start justify-between mb-1">
 <h2 className="text-xl font-bold text-gray-900">{build.title}</h2>
 <span className={`text-xs px-2 py-1 rounded-full font-medium ${DIFFICULTY_COLORS[
+["Like
 </div>
 <p className="text-sm text-gray-400 mb-4">by {build.author}</p>
 <div className="grid grid-cols-3 gap-3 mb-5">
@@ -248,23 +239,20 @@ return (
 </div>
 );
 }
-// ── Home Page ────────────────────────────────────────────────────────────────
-function HomePage({ onViewBuild, currentUser }) {
+function HomePage({ onViewBuild }) {
 const [query, setQuery] = useState("");
 const [filter, setFilter] = useState("All");
 const [communityBuilds, setCommunityBuilds] = useState([]);
 useEffect(() => {
-const q = query_firestore(collection(db, "builds"), orderBy("createdAt", "desc"));
 const unsub = onSnapshot(collection(db, "builds"), snap => {
-const builds = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-setCommunityBuilds(builds);
+setCommunityBuilds(snap.docs.map(d => ({ id: d.id, ...d.data() })));
 });
 return unsub;
 }, []);
 const allBuilds = [...SAMPLE_BUILDS, ...communityBuilds];
 const filtered = allBuilds.filter(b =>
 (filter === "All" || b.difficulty === filter) &&
-(b.title?.toLowerCase().includes(query.toLowerCase()) || (b.author || "").toLowerCase().i
+((b.title || "").toLowerCase().includes(query.toLowerCase()) || (b.author || "").toLowerC
 );
 return (
 <div className="pb-24">
@@ -282,13 +270,12 @@ return (
 </div>
 </div>
 {filtered.length === 0
-? <div className="text-center py-16 text-gray-400"><p className="text-4xl mb-3"> </p
+? <div className="text-center py-16 text-gray-400"><p className="text-4xl mb-3">?</p>
 : <div className="px-4 grid grid-cols-2 gap-3">{filtered.map(b => <BuildCard key={b.i
 }
 </div>
 );
 }
-// ── Community Page ───────────────────────────────────────────────────────────
 function CommunityPage({ currentUser }) {
 const [posts, setPosts] = useState([]);
 const [showNewPost, setShowNewPost] = useState(false);
@@ -317,28 +304,39 @@ authorId: currentUser.uid,
 authorName: currentUser.displayName || "Anonymous",
 caption: newCaption.trim(),
 image: newPhoto || null,
-emoji: " ",
 likes: [],
 comments: [],
 createdAt: serverTimestamp(),
 });
-setNewCaption(""); setNewPhoto(null); setShowNewPost(false);
-setNewPosted(true); setPosting(false);
+setNewCaption("");
+setNewPhoto(null);
+setShowNewPost(false);
+setNewPosted(true);
+setPosting(false);
 setTimeout(() => setNewPosted(false), 3000);
 };
-rounde
 return (
 <div className="pb-24">
 <div className="px-4 pt-5 pb-3 flex items-center justify-between">
-<div><h1 className="text-2xl font-bold text-gray-900">Community</h1><p className="tex
-<button onClick={() => setShowNewPost(true)} className="bg-gray-900 text-white </div>
+<div>
+<h1 className="text-2xl font-bold text-gray-900">Community</h1>
+<p className="text-sm text-gray-400">See what everyone's building</p>
+</div>
+<button onClick={() => setShowNewPost(true)} className="bg-gray-900 text-white <Camera size={18} />
+</button>
+</div>
 {newPosted && (
 <div className="mx-4 mb-3 bg-emerald-50 border border-emerald-200 rounded-xl px-4 py-
 <Check size={16} /> Your post is live!
 </div>
+rounde
 )}
 {posts.length === 0 && (
-<div className="text-center py-16 text-gray-400"><p className="text-4xl mb-3"> </p><
+<div className="text-center py-16 text-gray-400">
+<p className="text-4xl mb-3">?</p>
+<p className="font-medium">No posts yet</p>
+<p className="text-xs mt-1">Be the first to share a build!</p>
+</div>
 )}
 <div className="divide-y divide-gray-100">
 {posts.map(post => <PostCard key={post.id} post={post} currentUser={currentUser} />)}
@@ -351,7 +349,7 @@ return (
 <button onClick={() => setShowNewPost(false)}><X size={20} className="text-gray
 </div>
 {newPhoto ? (
-<div className="relative rounded-2xl overflow-hidden aspect-[4/3] bg-gray-100 m
+<div className="relative rounded-2xl overflow-hidden aspect-video bg-gray-100 m
 <img src={newPhoto} alt="Post" className="w-full h-full object-cover" />
 <button onClick={() => setNewPhoto(null)} className="absolute top-2 right-2 b
 </div>
@@ -361,10 +359,10 @@ return (
 <p className="text-sm font-medium text-gray-500">Add a photo (optional)</p>
 <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange
 </div>
+placeh
 )}
-<textarea value={newCaption} onChange={e => setNewCaption(e.target.value)} placeh
-<button onClick={submitPost} disabled={posting} className={`w-full py-3.5 rounded
-{posting ? "Posting…" : "Share with Community"}
+<textarea value={newCaption} onChange={e => setNewCaption(e.target.value)} <button onClick={submitPost} disabled={posting} className={`w-full py-3.5 rounded
+{posting ? "Posting..." : "Share with Community"}
 </button>
 </div>
 </div>
@@ -384,7 +382,13 @@ await updateDoc(ref, { likes: liked ? arrayRemove(currentUser.uid) : arrayUnion(
 const submitComment = async () => {
 const text = commentText.trim();
 if (!text) return;
-const comment = { id: Date.now().toString(), userId: currentUser.uid, username: currentUs
+const comment = {
+id: Date.now().toString(),
+userId: currentUser.uid,
+username: currentUser.displayName || "Anonymous",
+text,
+time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+};
 await updateDoc(doc(db, "posts", post.id), { comments: arrayUnion(comment) });
 setCommentText("");
 };
@@ -392,9 +396,9 @@ const timeAgo = post.createdAt?.toDate ? (() => {
 const diff = Date.now() - post.createdAt.toDate().getTime();
 const m = Math.floor(diff / 60000);
 if (m < 1) return "Just now";
-if (m < 60) return `${m}m ago`;
-if (m < 1440) return `${Math.floor(m / 60)}h ago`;
-return `${Math.floor(m / 1440)}d ago`;
+if (m < 60) return m + "m ago";
+if (m < 1440) return Math.floor(m / 60) + "h ago";
+return Math.floor(m / 1440) + "d ago";
 })() : "Just now";
 return (
 <div className="bg-white border-b border-gray-100">
@@ -408,8 +412,8 @@ return (
 </div>
 </div>
 {post.image
-? <img src={post.image} alt="" className="w-full aspect-[4/3] object-cover" />
-: <div className="w-full aspect-[4/3] bg-gradient-to-br from-gray-100 to-gray-200 fle
+? <img src={post.image} alt="" className="w-full aspect-video object-cover" />
+: <div className="w-full aspect-video bg-gradient-to-br from-gray-100 to-gray-200 fle
 }
 <div className="px-4 pt-3 pb-1">
 <div className="flex items-center gap-4 mb-2">
@@ -426,6 +430,8 @@ return (
 </div>
 {(post.comments || []).length > 0 && !showComments && (
 <button onClick={() => setShowComments(true)} className="px-4 pb-2 text-xs text-gray-
+View all {post.comments.length} comment{post.comments.length !== 1 ? "s" : ""}
+</button>
 )}
 {showComments && (
 <div className="px-4 pb-2 space-y-2">
@@ -448,7 +454,6 @@ return (
 </div>
 );
 }
-// ── Upload Page ──────────────────────────────────────────────────────────────
 function UploadPage({ currentUser }) {
 const [step, setStep] = useState(1);
 const [form, setForm] = useState({ title: "", pieces: "", difficulty: "Beginner", tags: "",
@@ -470,8 +475,9 @@ pieces: parseInt(form.pieces) || 0,
 difficulty: form.difficulty,
 tags: form.tags.split(",").map(t => t.trim()).filter(Boolean),
 image: photo || null,
-emoji: " ",
-likes: 0, steps: 0,
+color: "from-gray-200 to-gray-300",
+likes: 0,
+steps: 0,
 author: currentUser.displayName || "Anonymous",
 authorId: currentUser.uid,
 desc: form.desc,
@@ -482,7 +488,7 @@ setSubmitted(true);
 };
 if (submitted) return (
 <div className="flex flex-col items-center justify-center h-full px-8 text-center pb-24 p
-<div className="text-6xl mb-4"> </div>
+<div className="text-6xl mb-4">!</div>
 <h2 className="text-xl font-bold text-gray-900 mb-2">Build Uploaded!</h2>
 <p className="text-sm text-gray-400 mb-6">Your creation is now live for everyone to dis
 <button onClick={() => { setSubmitted(false); setStep(1); setForm({ title: "", pieces:
@@ -522,17 +528,17 @@ return (
 <input value={form.tags} onChange={e => update("tags", e.target.value)} placehold
 </div>
 <div>
+</div>
+</div>
 <label className="text-sm font-medium text-gray-700 block mb-1.5">Description</la
 <textarea value={form.desc} onChange={e => update("desc", e.target.value)} placeh
-</div>
 <button onClick={() => form.title && setStep(2)} className={`w-full py-3.5 rounded-
-</div>
 )}
 bg-bla
 {step === 2 && (
 <div className="space-y-4">
 {photo ? (
-<div className="relative rounded-2xl overflow-hidden aspect-[4/3] bg-gray-100">
+<div className="relative rounded-2xl overflow-hidden aspect-video bg-gray-100">
 <img src={photo} alt="Build" className="w-full h-full object-cover" />
 <button onClick={() => setPhoto(null)} className="absolute top-2 right-2 </div>
 ) : (
@@ -552,7 +558,6 @@ bg-bla
 </div>
 );
 }
-// ── Instructions Page ────────────────────────────────────────────────────────
 function InstructionsPage({ preloadBuild, currentUser }) {
 const [selectedBuild, setSelectedBuild] = useState(preloadBuild || null);
 const [steps, setSteps] = useState([]);
@@ -580,7 +585,6 @@ setPublished(true);
 };
 if (published) return (
 <div className="flex flex-col items-center justify-center h-full px-8 text-center pb-24 p
-<div className="text-6xl mb-4"> </div>
 <h2 className="text-xl font-bold text-gray-900 mb-2">Instructions Published!</h2>
 <p className="text-sm text-gray-400 mb-6">Builders can now follow your step-by-step gui
 <button onClick={() => { setPublished(false); setSteps([]); setSelectedBuild(null); }}
@@ -596,18 +600,28 @@ return (
 <div className="space-y-2">
 {SAMPLE_BUILDS.map(b => (
 <button key={b.id} onClick={() => setSelectedBuild(b)} className="w-full flex i
-<div className="w-12 h-12 rounded-lg bg-gray-100 flex items-center justify-ce
-<div className="flex-1"><p className="font-semibold text-gray-900 text-sm">{b
-<ChevronRight size={16} className="text-gray-300 shrink-0" />
+<div className={`w-12 h-12 rounded-lg bg-gradient-to-br ${b.color} flex items
+<Grid size={20} className="text-gray-500" />
+</div>
+<div className="flex-1">
+<p className="font-semibold text-gray-900 text-sm">{b.title}</p>
+<p className="text-xs text-gray-400">{b.pieces} pieces - {b.difficulty}</p>
+</div>
 </button>
+<ChevronRight size={16} className="text-gray-300 shrink-0" />
 ))}
 </div>
 </>
 ) : (
 <>
 <div className="flex items-center gap-3 bg-gray-50 rounded-xl p-3 mb-5">
-<div className="w-12 h-12 rounded-lg bg-gray-100 flex items-center justify-center
-<div className="flex-1"><p className="font-semibold text-sm text-gray-900">{selec
+<div className={`w-12 h-12 rounded-lg bg-gradient-to-br ${selectedBuild.color ||
+<Grid size={18} className="text-gray-500" />
+</div>
+<div className="flex-1">
+<p className="font-semibold text-sm text-gray-900">{selectedBuild.title}</p>
+<p className="text-xs text-gray-400">{selectedBuild.pieces} pieces</p>
+</div>
 <button onClick={() => setSelectedBuild(null)} className="text-xs text-gray-400 u
 </div>
 <div className="space-y-3 mb-5">
@@ -616,9 +630,12 @@ return (
 <div key={s.id} className="bg-white border border-gray-100 rounded-xl p-4 shado
 <div className="flex items-start gap-3">
 <span className="bg-gray-900 text-white text-xs font-bold w-6 h-6 rounded-f
-<div><p className="font-semibold text-sm text-gray-900">{s.title}</p>{s.des
+<div>
+<p className="font-semibold text-sm text-gray-900">{s.title}</p>
+{s.desc && <p className="text-xs text-gray-400 mt-0.5">{s.desc}</p>}
 </div>
-<button onClick={() => setSteps(s => s.filter(x => x.id !== s.id))} className
+</div>
+<button onClick={() => setSteps(prev => prev.filter(x => x.id !== s.id))} cla
 </div>
 ))}
 </div>
@@ -629,7 +646,7 @@ return (
 <button onClick={addStep} className={`w-full py-3 rounded-xl text-sm font-semibol
 </div>
 {steps.length > 0 && (
-<button onClick={publishInstructions} disabled={saving} className={`w-full {saving ? "Publishing…" : `Publish Instructions (${steps.length} steps)`}
+<button onClick={publishInstructions} disabled={saving} className={`w-full {saving ? "Publishing..." : "Publish Instructions (" + steps.length + " steps)"
 </button>
 py-3.5
 )}
@@ -638,11 +655,9 @@ py-3.5
 </div>
 );
 }
-// ── Profile Page ─────────────────────────────────────────────────────────────
 function ProfilePage({ currentUser, onSignOut }) {
 const [profile, setProfile] = useState(null);
 const [userBuilds, setUserBuilds] = useState([]);
-const [activeTab, setActiveTab] = useState("builds");
 const [editing, setEditing] = useState(false);
 const [editName, setEditName] = useState("");
 const [editBio, setEditBio] = useState("");
@@ -673,9 +688,15 @@ const updates = { displayName: editName, bio: editBio };
 if (photo) updates.photoURL = photo;
 await updateDoc(doc(db, "users", currentUser.uid), updates);
 await updateProfile(auth.currentUser, { displayName: editName, ...(photo ? { photoURL: ph
-setSaving(false); setEditing(false); setPhoto(null);
+setSaving(false);
+setEditing(false);
+setPhoto(null);
 };
-if (!profile) return <div className="flex items-center justify-center h-64"><div className=
+if (!profile) return (
+<div className="flex items-center justify-center h-64">
+<div className="w-8 h-8 border-2 border-gray-300 border-t-gray-900 rounded-full animate
+</div>
+);
 if (editing) return (
 <div className="pb-24 px-4 pt-6">
 <div className="flex items-center justify-between mb-6">
@@ -689,16 +710,22 @@ if (editing) return (
 ? <img src={photo || profile.photoURL} alt="" className="w-24 h-24 rounded-2xl ob
 : <div className={`w-24 h-24 rounded-2xl bg-gradient-to-br ${getGradient(currentU
 }
-<button onClick={() => fileRef.current?.click()} className="absolute -bottom-2 -rig
 </div>
-<input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handle
 </div>
 <div className="space-y-4">
-<div><label className="text-sm font-medium text-gray-700 block mb-1.5">Display Name</
-<div><label className="text-sm font-medium text-gray-700 block mb-1.5">Bio</label><te
+<div>
+</div>
+<div>
+</div>
+</div>
+</div>
+<button onClick={() => fileRef.current?.click()} className="absolute -bottom-2 -rig
+<input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handle
+<label className="text-sm font-medium text-gray-700 block mb-1.5">Display Name</lab
+<input value={editName} onChange={e => setEditName(e.target.value)} className="w-fu
+<label className="text-sm font-medium text-gray-700 block mb-1.5">Bio</label>
+<textarea value={editBio} onChange={e => setEditBio(e.target.value)} rows={3} class
 <button onClick={saveProfile} disabled={saving} className={`w-full py-3.5 rounded-xl
-</div>
-</div>
 );
 return (
 <div className="pb-24">
@@ -708,32 +735,41 @@ return (
 ? <img src={profile.photoURL} alt="" className="w-16 h-16 rounded-2xl object-cove
 : <div className={`w-16 h-16 rounded-2xl bg-gradient-to-br ${getGradient(currentU
 }
-<div><h2 className="text-xl font-bold text-gray-900">{profile.displayName}</h2><p c
+<div>
+<h2 className="text-xl font-bold text-gray-900">{profile.displayName}</h2>
+<p className="text-sm text-gray-400">{profile.email}</p>
+</div>
 </div>
 <p className="text-sm text-gray-500 mb-4">{profile.bio}</p>
 <div className="grid grid-cols-3 gap-3 mb-4">
 {[["Builds", userBuilds.length], ["Followers", (profile.followers || []).length], [
-<div key={label} className="bg-gray-50 rounded-xl py-3 text-center"><p className=
+<div key={label} className="bg-gray-50 rounded-xl py-3 text-center">
+<p className="font-bold text-gray-900">{val}</p>
+<p className="text-xs text-gray-400">{label}</p>
+</div>
 ))}
 </div>
 <div className="flex gap-2">
 <button onClick={() => { setEditName(profile.displayName); setEditBio(profile.bio);
+<Edit3 size={14} />Edit Profile
+</button>
 <button onClick={onSignOut} className="py-2.5 px-4 border border-gray-200 rounded-x
+<LogOut size={14} />Sign Out
+</button>
 </div>
 </div>
 <div className="flex border-b border-gray-100 px-4 mb-4">
-<button onClick={() => setActiveTab("builds")} className={`flex-1 py-3 text-sm </div>
+<div className="flex-1 py-3 text-sm font-semibold border-b-2 border-gray-900 text-gra
+</div>
 <div className="px-4">
 {userBuilds.length === 0
 ? <div className="flex flex-col items-center justify-center text-center py-16 gap-3
 : <div className="grid grid-cols-2 gap-3">{userBuilds.map(b => <BuildCard key={b.id
-font-s
 }
 </div>
 </div>
 );
 }
-// ── Help Page ────────────────────────────────────────────────────────────────
 function HelpPage() {
 const [open, setOpen] = useState(null);
 const [msg, setMsg] = useState("");
@@ -743,11 +779,11 @@ const faqs = [
 ["How do I create instructions?", "Go to the Guide tab, pick a build, then add steps one
 ["Can I edit my profile?", "Yes! Go to Profile and tap Edit Profile to update your name,
 ["How do I like a post?", "Tap the heart icon on any post in the Community feed."],
-["Is BrickBuilder free?", "Absolutely — BrickBuilder is free for everyone!"],
+["Is BrickBuilder free?", "Absolutely - BrickBuilder is free for everyone!"],
 ];
 return (
 <div className="pb-24 px-4 pt-6">
-<h1 className="text-2xl font-bold text-gray-900 mb-1">Help & Support</h1>
+<h1 className="text-2xl font-bold text-gray-900 mb-1">Help and Support</h1>
 <p className="text-sm text-gray-400 mb-6">Find answers or get in touch</p>
 <div className="space-y-2 mb-8">
 {faqs.map(([q, a], i) => (
@@ -761,21 +797,25 @@ return (
 ))}
 </div>
 {sent ? (
-) : (
+<div className="bg-gray-50 rounded-2xl p-6 text-center">
+<Check size={32} className="mx-auto text-emerald-500 mb-2" />
+<p className="font-semibold text-gray-800">Message Sent!</p>
+<p className="text-sm text-gray-400 mt-1">We will get back to you within 24 hours.<
+<button onClick={() => { setSent(false); setMsg(""); }} className="mt-4 text-sm tex
 </div>
-<div className="bg-gray-50 rounded-2xl p-6 text-center"><Check size={32} className="m
+) : (
 <div className="bg-gray-50 rounded-2xl p-4 space-y-3">
 <textarea value={msg} onChange={e => setMsg(e.target.value)} placeholder="Describe
 <button onClick={() => msg && setSent(true)} className={`w-full py-3 rounded-xl tex
+<MessageCircle size={15} />Send Message
+</button>
+</div>
 )}
 </div>
 );
 }
-// ── Root App ─────────────────────────────────────────────────────────────────
-// Fix: alias the firestore query function to avoid name clash
-const query_firestore = query;
 export default function BrickBuilderApp() {
-const [currentUser, setCurrentUser] = useState(undefined); // undefined = loading
+const [currentUser, setCurrentUser] = useState(undefined);
 const [tab, setTab] = useState("home");
 const [viewBuild, setViewBuild] = useState(null);
 const [instructionsBuild, setInstructionsBuild] = useState(null);
@@ -783,26 +823,30 @@ useEffect(() => {
 const unsub = onAuthStateChanged(auth, user => setCurrentUser(user || null));
 return unsub;
 }, []);
-const handleSignOut = async () => { await signOut(auth); setCurrentUser(null); };
-// Loading state
+const handleSignOut = async () => {
+await signOut(auth);
+setCurrentUser(null);
+};
 if (currentUser === undefined) {
 return (
 <div className="min-h-screen bg-gray-50 flex items-center justify-center">
 <div className="flex flex-col items-center gap-3">
 <div className="w-12 h-12 bg-gray-900 rounded-2xl flex items-center justify-center"
+<Grid size={20} className="text-white" />
+</div>
 <div className="w-6 h-6 border-2 border-gray-300 border-t-gray-900 rounded-full ani
 </div>
 </div>
 );
 }
-// Auth screen
 if (!currentUser) return <AuthScreen onAuth={setCurrentUser} />;
-// Main app
 return (
 <div className="min-h-screen bg-gray-50 max-w-lg mx-auto relative font-sans">
 <div className="sticky top-0 z-40 bg-white/90 backdrop-blur border-b border-gray-100 px
 <div className="flex items-center gap-2">
-<div className="w-7 h-7 bg-gray-900 rounded-lg flex items-center justify-center"><G
+<div className="w-7 h-7 bg-gray-900 rounded-lg flex items-center justify-center">
+<Grid size={14} className="text-white" />
+</div>
 <span className="text-base font-bold text-gray-900 tracking-tight">BrickBuilder</sp
 </div>
 <div className={`w-8 h-8 rounded-full bg-gradient-to-br ${getGradient(currentUser.uid
@@ -817,7 +861,13 @@ return (
 {tab === "profile" && <ProfilePage currentUser={currentUser} onSignOut={handleSignOut
 {tab === "help" && <HelpPage />}
 </div>
-{viewBuild && <BuildDetail build={viewBuild} onClose={() => setViewBuild(null)} onViewI
+{viewBuild && (
+<BuildDetail
+build={viewBuild}
+onClose={() => setViewBuild(null)}
+onViewInstructions={(b) => { setViewBuild(null); setInstructionsBuild(b); setTab("i
+/>
+)}
 <nav className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-lg bg-white/95 ba
 <div className="flex justify-around">
 {NAV_ITEMS.map(({ id, label, icon: Icon }) => (
@@ -826,8 +876,8 @@ return (
 <span className="text-xs font-medium">{label}</span>
 </button>
 ))}
-}
-);
 </div>
 </nav>
 </div>
+);
+}
